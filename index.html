@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentOrchestrator-RT — Multi-LLM Routing | Built for GetVocal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F4EFE6;
+            --bg-card: #FAF6EC;
+            --bg-elevated: #FFFFFF;
+            --bg-deep: #EDE7DA;
+            --ink: #1A1B3E;
+            --ink-soft: #2D2E55;
+            --muted: #6B6880;
+            --muted-soft: #9A97A8;
+            --coral: #E8826B;
+            --coral-soft: #F2A593;
+            --coral-bg: #FBE5DC;
+            --olive: #8B8F4E;
+            --olive-soft: #A5A968;
+            --olive-bg: #E8EAD2;
+            --border: #E0D9C8;
+            --border-soft: #EDE7DA;
+            --shadow: 0 4px 20px rgba(26, 27, 62, 0.06);
+            --shadow-lg: 0 12px 40px rgba(26, 27, 62, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* Header — pill-shaped nav like GetVocal */
+        .top-nav {
+            max-width: 1400px;
+            margin: 1.25rem auto 0;
+            padding: 0 1.5rem;
+        }
+
+        .nav-pill {
+            background: var(--bg-elevated);
+            border-radius: 100px;
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .brand-mark {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 22px;
+        }
+
+        .brand-bar {
+            width: 3px;
+            background: var(--ink);
+            border-radius: 2px;
+            animation: equalize 1.4s ease-in-out infinite;
+        }
+
+        .brand-bar:nth-child(1) { height: 60%; animation-delay: 0s; }
+        .brand-bar:nth-child(2) { height: 100%; animation-delay: 0.15s; }
+        .brand-bar:nth-child(3) { height: 75%; animation-delay: 0.3s; }
+        .brand-bar:nth-child(4) { height: 90%; animation-delay: 0.45s; }
+        .brand-bar:nth-child(5) { height: 50%; animation-delay: 0.6s; }
+
+        @keyframes equalize {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.5); }
+        }
+
+        .brand-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-meta {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            font-size: 0.875rem;
+            color: var(--ink-soft);
+            font-weight: 500;
+        }
+
+        .nav-cta {
+            background: var(--ink);
+            color: var(--bg-elevated);
+            padding: 0.55rem 1.2rem;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Hero */
+        .hero {
+            max-width: 1400px;
+            margin: 2.5rem auto 1.5rem;
+            padding: 0 1.5rem;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--coral-bg);
+            color: var(--coral);
+            padding: 0.4rem 0.9rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .hero-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--coral);
+            border-radius: 50%;
+            animation: pulseDot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero h1 {
+            font-size: 2.75rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 0.75rem;
+            max-width: 800px;
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: var(--coral);
+        }
+
+        .hero-sub {
+            font-size: 1.05rem;
+            color: var(--muted);
+            max-width: 640px;
+        }
+
+        /* Workspace */
+        .workspace {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 1.25rem;
+        }
+
+        @media (max-width: 1100px) {
+            .workspace { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .card-elevated {
+            background: var(--bg-elevated);
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--border-soft);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .card-subtitle {
+            font-size: 0.7rem;
+            color: var(--muted-soft);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .card-body { padding: 1.4rem; }
+
+        /* Sidebar layout */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* Provider cards — main feature */
+        .provider-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .provider {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 0.95rem 1.1rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .provider.active {
+            border-color: var(--coral);
+            box-shadow: 0 0 0 4px var(--coral-bg);
+        }
+
+        .provider-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+        }
+
+        .provider-info {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .provider-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: white;
+        }
+
+        .provider-avatar.gpt { background: linear-gradient(135deg, #10A37F, #0D7C5F); }
+        .provider-avatar.claude { background: linear-gradient(135deg, #C9602A, #A04D1E); }
+        .provider-avatar.mistral { background: linear-gradient(135deg, #FF7000, #C95800); }
+
+        .provider-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .provider-model {
+            font-size: 0.7rem;
+            color: var(--muted-soft);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status-pill {
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-pill.online {
+            background: var(--olive-bg);
+            color: var(--olive);
+        }
+
+        .status-pill.degraded {
+            background: #FBF0DC;
+            color: #B88A3A;
+        }
+
+        .status-pill.offline {
+            background: #F5DCDC;
+            color: #B85A5A;
+        }
+
+        .provider-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .metric {
+            text-align: left;
+        }
+
+        .metric-val {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .metric-label {
+            font-size: 0.6rem;
+            color: var(--muted-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 1px;
+        }
+
+        /* Strategy selector */
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .strategy-btn {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .strategy-btn:hover {
+            border-color: var(--coral-soft);
+            transform: translateY(-1px);
+        }
+
+        .strategy-btn.active {
+            background: var(--ink);
+            border-color: var(--ink);
+            color: white;
+        }
+
+        .strategy-icon {
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+
+        .strategy-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .strategy-desc {
+            font-size: 0.65rem;
+            opacity: 0.7;
+            margin-top: 0.15rem;
+        }
+
+        /* Main conversation panel */
+        .convo-panel {
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .convo-feed {
+            flex: 1;
+            padding: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 480px;
+            max-height: 560px;
+            overflow-y: auto;
+        }
+
+        .message {
+            max-width: 78%;
+            animation: messageIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.agent {
+            align-self: flex-start;
+        }
+
+        .message-meta {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.4rem;
+            font-size: 0.7rem;
+            color: var(--muted-soft);
+        }
+
+        .message.user .message-meta {
+            justify-content: flex-end;
+        }
+
+        .agent-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-weight: 600;
+            color: var(--ink-soft);
+        }
+
+        .message-bubble {
+            padding: 0.9rem 1.1rem;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .message.user .message-bubble {
+            background: var(--ink);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.agent .message-bubble {
+            background: var(--coral-bg);
+            color: var(--ink);
+            border-bottom-left-radius: 6px;
+        }
+
+        .message.agent.routed-gpt .message-bubble {
+            background: #DFF0E8;
+        }
+
+        .message.agent.routed-claude .message-bubble {
+            background: var(--coral-bg);
+        }
+
+        .message.agent.routed-mistral .message-bubble {
+            background: #FBE5D3;
+        }
+
+        .message-trace {
+            font-size: 0.65rem;
+            color: var(--muted-soft);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 0.4rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .trace-item strong { color: var(--ink-soft); font-weight: 600; }
+
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
+            padding: 0.9rem 1.1rem;
+            background: var(--coral-bg);
+            border-radius: 18px;
+            border-bottom-left-radius: 6px;
+        }
+
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--coral);
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* Input area */
+        .convo-input {
+            padding: 1.1rem 1.4rem;
+            border-top: 1px solid var(--border-soft);
+            background: var(--bg-elevated);
+        }
+
+        .preset-prompts {
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            color: var(--ink-soft);
+            padding: 0.4rem 0.85rem;
+            border-radius: 100px;
+            font-size: 0.72rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: var(--ink);
+            color: white;
+            border-color: var(--ink);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-field {
+            flex: 1;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 0.75rem 1.2rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--ink);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: var(--coral);
+            background: var(--bg-elevated);
+        }
+
+        .send-btn {
+            background: var(--ink);
+            color: white;
+            border: none;
+            border-radius: 100px;
+            padding: 0 1.5rem;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--coral);
+            transform: translateX(2px);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Latency strip */
+        .latency-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.6rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .latency-cell {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1rem;
+        }
+
+        .latency-cell-label {
+            font-size: 0.7rem;
+            color: var(--muted-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+            margin-bottom: 0.35rem;
+        }
+
+        .latency-cell-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--ink);
+            letter-spacing: -0.02em;
+        }
+
+        .latency-cell-unit {
+            font-size: 0.75rem;
+            color: var(--muted-soft);
+            font-weight: 500;
+            margin-left: 2px;
+        }
+
+        .latency-trend {
+            font-size: 0.7rem;
+            color: var(--olive);
+            margin-top: 0.3rem;
+            font-weight: 500;
+        }
+
+        .latency-trend.down { color: var(--coral); }
+
+        /* Stat cell with selector ring */
+        @keyframes ringPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(232, 130, 107, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(232, 130, 107, 0); }
+        }
+
+        .provider.routing-now {
+            animation: ringPulse 1.2s ease-out;
+        }
+
+        /* Cost tracker bar */
+        .cost-bar {
+            background: var(--bg-deep);
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .cost-bar-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .cost-savings {
+            color: var(--olive);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .cost-track {
+            height: 6px;
+            background: var(--bg-elevated);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .cost-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--olive), var(--olive-soft));
+            border-radius: 100px;
+            width: 38%;
+            transition: width 0.6s;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 100px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted-soft); }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .latency-strip { grid-template-columns: 1fr 1fr; }
+            .strategy-grid { grid-template-columns: 1fr; }
+            .nav-meta .nav-link { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <div class="nav-pill">
+            <div class="brand">
+                <div class="brand-mark">
+                    <div class="brand-bar"></div>
+                    <div class="brand-bar"></div>
+                    <div class="brand-bar"></div>
+                    <div class="brand-bar"></div>
+                    <div class="brand-bar"></div>
+                </div>
+                <span class="brand-name">AgentOrchestrator&nbsp;<em style="color:var(--coral);font-style:normal">RT</em></span>
+            </div>
+            <div class="nav-meta">
+                <span class="nav-link">Built for GetVocal</span>
+                <span class="nav-link">Real-time</span>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-eyebrow"><span class="hero-dot"></span> Demo running live</div>
+        <h1>Multi-LLM routing that <em>builds trust</em>, not latency.</h1>
+        <p class="hero-sub">Live orchestration across GPT-4o, Claude 3.5 Sonnet, and Mistral Large with latency-aware routing, automatic failover, and per-request tracing — the execution layer behind reliable voice agents.</p>
+    </section>
+
+    <main class="workspace">
+
+        <!-- LEFT: latency strip + conversation -->
+        <div>
+            <div class="latency-strip">
+                <div class="latency-cell">
+                    <div class="latency-cell-label">P50 Latency</div>
+                    <div class="latency-cell-value" id="p50">312<span class="latency-cell-unit">ms</span></div>
+                    <div class="latency-trend">↓ 18% vs baseline</div>
+                </div>
+                <div class="latency-cell">
+                    <div class="latency-cell-label">P95 Latency</div>
+                    <div class="latency-cell-value" id="p95">847<span class="latency-cell-unit">ms</span></div>
+                    <div class="latency-trend">↓ 9% vs baseline</div>
+                </div>
+                <div class="latency-cell">
+                    <div class="latency-cell-label">Throughput</div>
+                    <div class="latency-cell-value" id="throughput">142<span class="latency-cell-unit">req/s</span></div>
+                    <div class="latency-trend">↑ stable</div>
+                </div>
+                <div class="latency-cell">
+                    <div class="latency-cell-label">Cost / 1k req</div>
+                    <div class="latency-cell-value" id="cost">$0.42</div>
+                    <div class="latency-trend">↓ 40% vs static</div>
+                </div>
+            </div>
+
+            <div class="card card-elevated convo-panel">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Live conversation</div>
+                        <div class="card-subtitle">Watch requests get routed in real time</div>
+                    </div>
+                    <div class="card-subtitle" id="reqCount">0 requests · 0 routed</div>
+                </div>
+
+                <div class="convo-feed" id="convoFeed">
+                    <div class="message agent">
+                        <div class="message-meta"><span class="agent-tag">● Orchestrator</span> · ready</div>
+                        <div class="message-bubble">Hi — I route each request to the optimal LLM based on the active strategy. Send a message or try a preset to see live routing decisions and per-provider tracing.</div>
+                    </div>
+                </div>
+
+                <div class="convo-input">
+                    <div class="preset-prompts">
+                        <button class="preset-btn" onclick="sendPreset('What is my refund policy?')">Refund policy lookup</button>
+                        <button class="preset-btn" onclick="sendPreset('I need to escalate this — high value return')">Escalation flow</button>
+                        <button class="preset-btn" onclick="sendPreset('Summarize the last 3 calls with John Doe.')">Summarization</button>
+                        <button class="preset-btn" onclick="sendPreset('Generate a creative apology email')">Creative writing</button>
+                    </div>
+                    <div class="input-row">
+                        <input class="input-field" id="userInput" placeholder="Type a message to orchestrate…" onkeydown="if(event.key==='Enter')sendMessage()">
+                        <button class="send-btn" id="sendBtn" onclick="sendMessage()">Route →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Providers + strategy -->
+        <aside class="sidebar">
+
+            <div class="card card-elevated">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Routing strategy</div>
+                        <div class="card-subtitle">Selects winner per request</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="strategy-grid">
+                        <div class="strategy-btn active" data-strategy="latency" onclick="setStrategy(this, 'latency')">
+                            <span class="strategy-icon">⚡</span>
+                            <div class="strategy-name">Lowest latency</div>
+                            <div class="strategy-desc">Always fastest healthy provider</div>
+                        </div>
+                        <div class="strategy-btn" data-strategy="cost" onclick="setStrategy(this, 'cost')">
+                            <span class="strategy-icon">⌁</span>
+                            <div class="strategy-name">Cost-optimized</div>
+                            <div class="strategy-desc">Cheapest within SLA</div>
+                        </div>
+                        <div class="strategy-btn" data-strategy="quality" onclick="setStrategy(this, 'quality')">
+                            <span class="strategy-icon">◆</span>
+                            <div class="strategy-name">Quality-first</div>
+                            <div class="strategy-desc">Best model for task type</div>
+                        </div>
+                        <div class="strategy-btn" data-strategy="round" onclick="setStrategy(this, 'round')">
+                            <span class="strategy-icon">↻</span>
+                            <div class="strategy-name">Round-robin</div>
+                            <div class="strategy-desc">Even load distribution</div>
+                        </div>
+                    </div>
+
+                    <div class="cost-bar">
+                        <div class="cost-bar-top">
+                            <span>Cost vs single-provider baseline</span>
+                            <span class="cost-savings" id="savingsPct">−40%</span>
+                        </div>
+                        <div class="cost-track"><div class="cost-fill" id="costFill"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-elevated">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Provider health</div>
+                        <div class="card-subtitle">Live status & metrics</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="provider-list" id="providerList">
+                        <div class="provider" id="prov-gpt">
+                            <div class="provider-top">
+                                <div class="provider-info">
+                                    <div class="provider-avatar gpt">GP</div>
+                                    <div>
+                                        <div class="provider-name">OpenAI</div>
+                                        <div class="provider-model">gpt-4o-2024-08</div>
+                                    </div>
+                                </div>
+                                <span class="status-pill online" id="status-gpt">online</span>
+                            </div>
+                            <div class="provider-metrics">
+                                <div class="metric">
+                                    <div class="metric-val" id="lat-gpt">284ms</div>
+                                    <div class="metric-label">p50</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-val" id="err-gpt">0.02%</div>
+                                    <div class="metric-label">err rate</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-val" id="cost-gpt">$0.50</div>
+                                    <div class="metric-label">/1k tok</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="provider" id="prov-claude">
+                            <div class="provider-top">
+                                <div class="provider-info">
+                                    <div class="provider-avatar claude">CL</div>
+                                    <div>
+                                        <div class="provider-name">Anthropic</div>
+                                        <div class="provider-model">claude-3-5-sonnet</div>
+                                    </div>
+                                </div>
+                                <span class="status-pill online" id="status-claude">online</span>
+                            </div>
+                            <div class="provider-metrics">
+                                <div class="metric">
+                                    <div class="metric-val" id="lat-claude">329ms</div>
+                                    <div class="metric-label">p50</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-val" id="err-claude">0.01%</div>
+                                    <div class="metric-label">err rate</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-val" id="cost-claude">$0.30</div>
+                                    <div class="metric-label">/1k tok</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="provider" id="prov-mistral">
+                            <div class="provider-top">
+                                <div class="provider-info">
+                                    <div class="provider-avatar mistral">MI</div>
+                                    <div>
+                                        <div class="provider-name">Mistral</div>
+                                        <div class="provider-model">mistral-large-2</div>
+                                    </div>
+                                </div>
+                                <span class="status-pill online" id="status-mistral">online</span>
+                            </div>
+                            <div class="provider-metrics">
+                                <div class="metric">
+                                    <div class="metric-val" id="lat-mistral">241ms</div>
+                                    <div class="metric-label">p50</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-val" id="err-mistral">0.04%</div>
+                                    <div class="metric-label">err rate</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-val" id="cost-mistral">$0.20</div>
+                                    <div class="metric-label">/1k tok</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+    </main>
+
+    <script>
+        const providers = {
+            gpt:     { id:'gpt',     name:'GPT-4o',           tag:'gpt',     baseLat:284, cost:0.50, quality:0.95 },
+            claude:  { id:'claude',  name:'Claude 3.5',       tag:'claude',  baseLat:329, cost:0.30, quality:0.97 },
+            mistral: { id:'mistral', name:'Mistral Large 2',  tag:'mistral', baseLat:241, cost:0.20, quality:0.91 }
+        };
+
+        let strategy = 'latency';
+        let reqCount = 0;
+        let routedCount = 0;
+        let rrIndex = 0;
+
+        const presetResponses = {
+            'refund': [
+                "Looking up your refund policy now. For orders under $500, you have 30 days to initiate. Want me to start that process?",
+                "Here's the refund window summary: 30 days for standard items, 60 days for premium. I'll guide you through if needed.",
+                "Refund policy located. You're eligible for a full refund. Should I flag this for human approval before I process it?"
+            ],
+            'escalate': [
+                "Got it — flagging for human approval. I'll just check with my supervisor back shortly. High-value returns need a second look.",
+                "That's no problem — let me hand this to a human agent. Routing the context to the supervisor queue now.",
+                "Escalating now. Your case ID is #482-A. A human agent will follow up in under 5 minutes."
+            ],
+            'summarize': [
+                "Pulling the last 3 conversations with John Doe. Themes: pricing concerns, integration timeline, support follow-up. Want the full summary?",
+                "Summary ready. Three calls, two open questions on integration, one resolved billing issue. Shall I draft a follow-up?"
+            ],
+            'creative': [
+                "Drafting an apology email now. Tone: warm, accountable, forward-looking. Will offer a concrete remediation. One moment.",
+                "Here's a draft: 'I want to personally apologize for the delay…' — I can adjust the tone if you'd like it more formal or warmer."
+            ],
+            'generic': [
+                "Processing your request through the optimal provider for this task type.",
+                "On it — routing through the lowest-latency provider with healthy capacity right now.",
+                "Got it. Selecting the best model for this query and streaming the response."
+            ]
+        };
+
+        function classify(text) {
+            const t = text.toLowerCase();
+            if (t.includes('refund') || t.includes('policy')) return 'refund';
+            if (t.includes('escalate') || t.includes('high value') || t.includes('supervisor')) return 'escalate';
+            if (t.includes('summar')) return 'summarize';
+            if (t.includes('creative') || t.includes('write') || t.includes('draft')) return 'creative';
+            return 'generic';
+        }
+
+        function pickProvider(taskType) {
+            if (strategy === 'latency') {
+                const sorted = Object.values(providers).sort((a,b) => a.baseLat - b.baseLat);
+                return sorted[0];
+            }
+            if (strategy === 'cost') {
+                const sorted = Object.values(providers).sort((a,b) => a.cost - b.cost);
+                return sorted[0];
+            }
+            if (strategy === 'quality') {
+                if (taskType === 'creative' || taskType === 'summarize') return providers.claude;
+                return Object.values(providers).sort((a,b) => b.quality - a.quality)[0];
+            }
+            if (strategy === 'round') {
+                const order = ['gpt','claude','mistral'];
+                const choice = providers[order[rrIndex % 3]];
+                rrIndex++;
+                return choice;
+            }
+        }
+
+        function setStrategy(el, s) {
+            document.querySelectorAll('.strategy-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            strategy = s;
+            const savingsMap = { latency: -18, cost: -52, quality: -8, round: -24 };
+            const pct = savingsMap[s];
+            document.getElementById('savingsPct').textContent = pct + '%';
+            document.getElementById('costFill').style.width = Math.abs(pct) + '%';
+        }
+
+        function sendPreset(text) {
+            document.getElementById('userInput').value = text;
+            sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+
+            const feed = document.getElementById('convoFeed');
+
+            // user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.innerHTML = `
+                <div class="message-meta">user · just now</div>
+                <div class="message-bubble">${escapeHtml(text)}</div>
+            `;
+            feed.appendChild(userMsg);
+            feed.scrollTop = feed.scrollHeight;
+
+            // routing decision
+            const task = classify(text);
+            const chosen = pickProvider(task);
+            highlightProvider(chosen.id);
+
+            // typing indicator
+            const typingWrap = document.createElement('div');
+            typingWrap.className = 'message agent';
+            typingWrap.innerHTML = `
+                <div class="message-meta"><span class="agent-tag">▮ Routing → ${chosen.name}</span></div>
+                <div class="typing-indicator">
+                    <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+                </div>
+            `;
+            feed.appendChild(typingWrap);
+            feed.scrollTop = feed.scrollHeight;
+
+            const ttfb = Math.floor(180 + Math.random() * 220);
+            const totalLat = ttfb + Math.floor(80 + Math.random() * 160);
+
+            setTimeout(() => {
+                const pool = presetResponses[task] || presetResponses.generic;
+                const response = pool[Math.floor(Math.random() * pool.length)];
+
+                typingWrap.innerHTML = `
+                    <div class="message-meta"><span class="agent-tag">▮ ${chosen.name}</span> · streamed</div>
+                    <div class="message-bubble">${escapeHtml(response)}</div>
+                    <div class="message-trace">
+                        <span class="trace-item"><strong>strategy:</strong> ${strategy}</span>
+                        <span class="trace-item"><strong>ttfb:</strong> ${ttfb}ms</span>
+                        <span class="trace-item"><strong>total:</strong> ${totalLat}ms</span>
+                        <span class="trace-item"><strong>tokens:</strong> ${Math.floor(40+Math.random()*120)}</span>
+                    </div>
+                `;
+                typingWrap.classList.add('routed-' + chosen.tag);
+                feed.scrollTop = feed.scrollHeight;
+
+                reqCount++;
+                routedCount++;
+                document.getElementById('reqCount').textContent = `${reqCount} requests · ${routedCount} routed`;
+                updateAggregateMetrics();
+            }, ttfb);
+        }
+
+        function highlightProvider(id) {
+            document.querySelectorAll('.provider').forEach(p => p.classList.remove('active', 'routing-now'));
+            const el = document.getElementById('prov-' + id);
+            el.classList.add('active', 'routing-now');
+            setTimeout(() => el.classList.remove('routing-now'), 1200);
+        }
+
+        function escapeHtml(s) {
+            return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        function updateAggregateMetrics() {
+            // simulate small fluctuations
+            document.getElementById('p50').innerHTML = (290 + Math.floor(Math.random()*40)) + '<span class="latency-cell-unit">ms</span>';
+            document.getElementById('p95').innerHTML = (820 + Math.floor(Math.random()*60)) + '<span class="latency-cell-unit">ms</span>';
+            document.getElementById('throughput').innerHTML = (135 + Math.floor(Math.random()*20)) + '<span class="latency-cell-unit">req/s</span>';
+        }
+
+        // background: drift provider metrics
+        setInterval(() => {
+            ['gpt','claude','mistral'].forEach(id => {
+                const base = providers[id].baseLat;
+                const lat = base + Math.floor((Math.random() - 0.5) * 40);
+                providers[id].liveLat = lat;
+                const el = document.getElementById('lat-' + id);
+                if (el) el.textContent = lat + 'ms';
+            });
+        }, 1800);
+
+        // initialize cost fill
+        document.getElementById('costFill').style.width = '40%';
+    </script>
+</body>
+</html>
